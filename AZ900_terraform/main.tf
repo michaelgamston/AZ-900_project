@@ -24,6 +24,7 @@ resource "azurerm_resource_group" "AZ900" {
 #Storage blob
 #------------
 
+
 #storage account
 resource "azurerm_storage_account" "AZ900" {
   name                     = "az900images"
@@ -40,6 +41,15 @@ resource "azurerm_storage_container" "input" {
   storage_account_id  = azurerm_storage_account.AZ900.id
   container_access_type = "private"
 }
+
+#give my account permission to upload to blob
+#id stored in variables.tf not uploaded to git
+resource "azurerm_role_assignment" "blob_contributor" {
+  scope                 = azurerm_storage_account.AZ900.id
+  role_definition_name  = "Storage Blob Data Contributor"
+  principal_id          = var.blob_contributor_id
+}
+
 
 #------------
 #Cosmo db
