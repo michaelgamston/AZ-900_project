@@ -47,7 +47,7 @@ resource "azurerm_storage_container" "input" {
 resource "azurerm_role_assignment" "blob_contributor" {
   scope                 = azurerm_storage_account.AZ900.id
   role_definition_name  = "Storage Blob Data Contributor"
-  principal_id          = var.blob_contributor_id
+  principal_id          = var.principal_id
 }
 
 
@@ -55,38 +55,49 @@ resource "azurerm_role_assignment" "blob_contributor" {
 #Cosmo db
 #------------
 
-# resource "azurerm_cosmosdb_account" "AZ900" {
-#   name                = "AZ900results"
-#   location            = azurerm_resource_group.AZ900.location
-#   resource_group_name = azurerm_resource_group.AZ900.name
+resource "azurerm_cosmosdb_account" "AZ900" {
+  name                = "az900results"
+  location            = azurerm_resource_group.AZ900.location
+  resource_group_name = azurerm_resource_group.AZ900.name
 
-#   offer_type = "Standard"
-#   kind       = "GlobalDocumentDB"
+  offer_type = "Standard"
+  kind       = "GlobalDocumentDB"
 
-#   consistency_policy {
-#     consistency_level = "Session"
-#   }
+  consistency_policy {
+    consistency_level = "Session"
+  }
 
-#   geo_location {
-#     location          = azurerm_resource_group.main.location
-#     failover_priority = 0
-#   }
-# }
+  geo_location {
+    location          = azurerm_resource_group.AZ900.location
+    failover_priority = 0
+  }
+}
 
-# resource "azurerm_cosmosdb_sql_database" "AZ900" {
-#   name                = "image-results"
-#   resource_group_name = azurerm_resource_group.main.AZ900
-#   account_name        = azurerm_cosmosdb_account.main.AZ900
-# }
+resource "azurerm_cosmosdb_sql_database" "AZ900" {
+  name                = "image-results"
+  resource_group_name = azurerm_resource_group.AZ900.name
+  account_name        = azurerm_cosmosdb_account.AZ900.name
+}
 
-# resource "azurerm_cosmosdb_sql_container" "predictions" {
-#   name                = "predictions"
-#   resource_group_name = azurerm_resource_group.AZ900.name
-#   account_name        = azurerm_cosmosdb_account.AZ900.name
-#   database_name       = azurerm_cosmosdb_sql_database.AZ900.name
+resource "azurerm_cosmosdb_sql_container" "predictions" {
+  name                = "predictions"
+  resource_group_name = azurerm_resource_group.AZ900.name
+  account_name        = azurerm_cosmosdb_account.AZ900.name
+  database_name       = azurerm_cosmosdb_sql_database.AZ900.name
 
-#   partition_key_paths = ["/imageId"]
-# }
+  partition_key_paths = ["/prediction_label"]
+}
+
+resource "azurerm_cosmosdb_sql_role_assignment" "python_user" {
+  resource_group_name = azurerm_resource_group.AZ900.name
+  account_name        = azurerm_cosmosdb_account.AZ900.name
+
+  role_definition_id = "${azurerm_cosmosdb_account.AZ900.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
+
+  principal_id = var.principal_id
+
+  scope = azurerm_cosmosdb_account.AZ900.id
+}
 
 # #------------
 # #Azure Function
