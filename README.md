@@ -12,10 +12,11 @@ My goal is to successfully build a image prediction pipeline following the struc
 API -> Azure Blob Storage -> Azure function (Image classifier) -> CosmoDB
 
 Lastest push: 
-- I've deployed a cosmosDB account and container. 
-- Provisioned my account to have read/ write access to the container. 
-- I have also updated the image_predictor file to classify an image locally, and then push the results in a JSON doc to the cosmosDB container.
+- I've deployed a function 
+- Created a local function_app folder to hold the function code
+- Created a role for the function to allow it access to cosmosDB
+- Given the function an app_setting to keep track of the cosmosDB endpoint
 
 Next update: 
-- I will deploy an Azure Function.
-- Update the image_predictor code so it is able to run in the function, recieve images from Blob storage and then push the results to cosmosDB.
+- update the function app code ready for deployment
+- deploy the function app code to the function

@@ -99,32 +99,52 @@ resource "azurerm_cosmosdb_sql_role_assignment" "python_user" {
   scope = azurerm_cosmosdb_account.AZ900.id
 }
 
-# #------------
-# #Azure Function
-# #------------
+resource "azurerm_cosmosdb_sql_role_assignment" "function_app" {
+  resource_group_name = azurerm_resource_group.AZ900.name
+  account_name        = azurerm_cosmosdb_account.AZ900.name
 
-# resource "azurerm_service_plan" "AZ900" {
-#   name                = "image-pipeline-plan"
-#   resource_group_name = azurerm_resource_group.AZ900.name
-#   location            = azurerm_resource_group.AZ900.location
+  role_definition_id = "${azurerm_cosmosdb_account.AZ900.id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
 
-#   os_type  = "Linux"
-#   sku_name = "Y1"
-# }
+  #return the principal id of the azure function
+  principal_id = azurerm_linux_function_app.AZ900.identity[0].principal_id
 
-# resource "azurerm_linux_function_app" "AZ900" {
-#   name                = "process_images_post_results"
-#   resource_group_name = azurerm_resource_group.AZ900.name
-#   location            = azurerm_resource_group.AZ900.location
+  scope = azurerm_cosmosdb_account.AZ900.id
+}
 
-#   service_plan_id = azurerm_service_plan.AZ900.id
+#------------
+#Azure Function
+#------------
 
-#   storage_account_name       = azurerm_storage_account.AZ900.name
-#   storage_account_access_key = azurerm_storage_account.AZ900.primary_access_key
+resource "azurerm_service_plan" "AZ900" {
+  name                = "image-pipeline-plan"
+  resource_group_name = azurerm_resource_group.AZ900.name
+  location            = azurerm_resource_group.AZ900.location
 
-#   site_config {
-#     application_stack {
-#       python_version = "3.11"
-#     }
-#   }
-# }
+  os_type  = "Linux"
+  sku_name = "Y1"
+}
+
+resource "azurerm_linux_function_app" "AZ900" {
+  name                = "image-predictor-handler"
+  resource_group_name = azurerm_resource_group.AZ900.name
+  location            = azurerm_resource_group.AZ900.location
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  app_settings = {
+    "COSMOS_URL" = azurerm_cosmosdb_account.AZ900.endpoint
+  }
+
+  service_plan_id = azurerm_service_plan.AZ900.id
+
+  storage_account_name       = azurerm_storage_account.AZ900.name
+  storage_account_access_key = azurerm_storage_account.AZ900.primary_access_key
+
+  site_config {
+    application_stack {
+      python_version = "3.11"
+    }
+  }
+}
