@@ -147,4 +147,11 @@ resource "azurerm_linux_function_app" "AZ900" {
       python_version = "3.11"
     }
   }
+
+  lifecycle {
+    ignore_changes = [
+      app_settings["WEBSITE_RUN_FROM_PACKAGE"],   # func manages this, so Terraform ignores it
+    ]
+  }
+  
 }
